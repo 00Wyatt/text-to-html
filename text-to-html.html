@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Text to HTML Formatter</title>
+  </head>
+  <body>
+    <h1>Text to HTML Formatter</h1>
+    <textarea
+      id="inputText"
+      rows="15"
+      cols="70"
+      placeholder="Enter your text here..."
+    ></textarea
+    ><br />
+    <button onclick="formatText()">Format Text</button>
+    <h2>Formatted Output:</h2>
+    <pre id="output"></pre>
+
+    <script>
+      function formatText() {
+        let text = document.getElementById("inputText").value;
+
+        // Split the input by lines
+        let lines = text.split("\n");
+        let formattedText = "";
+        let inUnorderedList = false;
+        let inOrderedList = false;
+
+        function closeList() {
+          if (inUnorderedList) {
+            formattedText += "</ul>\n";
+            inUnorderedList = false;
+          }
+          if (inOrderedList) {
+            formattedText += "</ol>\n";
+            inOrderedList = false;
+          }
+        }
+
+        // Regex for internal and external links
+        const internalLinkRegex = /\[internal link:\s*(https?:\/\/[^\]]+)\]/gi;
+        const externalLinkRegex = /\[external link:\s*(https?:\/\/[^\]]+)\]/gi;
+
+        lines.forEach((line) => {
+          // Format internal links
+          line = line.replace(internalLinkRegex, function (match, url) {
+            return `<a href="${url}">INTERNAL LINK</a>`;
+          });
+
+          // Format external links
+          line = line.replace(externalLinkRegex, function (match, url) {
+            return `<a href="${url}" target="_blank" rel="noopener">EXTERNAL LINK</a>`;
+          });
+
+          if (line.startsWith("H1:")) {
+            // Close any open lists before starting a new section
+            closeList();
+            // Wrap text after "H1:" with <h1> tags
+            formattedText += "<h1>" + line.substring(3).trim() + "</h1>\n";
+          } else if (line.startsWith("H2:")) {
+            // Close any open lists before starting a new section
+            closeList();
+            // Wrap text after "H2:" with <h2> tags
+            formattedText += "<h2>" + line.substring(3).trim() + "</h2>\n";
+          } else if (line.startsWith("H3:")) {
+            // Close any open lists before starting a new section
+            closeList();
+            // Wrap text after "H3:" with <h3> tags
+            formattedText += "<h3>" + line.substring(3).trim() + "</h3>\n";
+          } else if (line.startsWith("H4:")) {
+            // Close any open lists before starting a new section
+            closeList();
+            // Wrap text after "H4:" with <h4> tags
+            formattedText += "<h4>" + line.substring(3).trim() + "</h4>\n";
+          } else if (line.trim().startsWith("•")) {
+            // Handle unordered list items
+            if (!inUnorderedList) {
+              formattedText += "<ul>\n";
+              inUnorderedList = true;
+            }
+            let listItemContent = line.trim().substring(1).trim(); // Get list item text
+            if (listItemContent.includes(":")) {
+              let parts = listItemContent.split(/:(.*)/s); // Split into two parts: before and after the first colon
+              formattedText += `<li><strong>${parts[0]}:</strong>${parts[1]}</li>\n`;
+            } else {
+              formattedText += `<li>${listItemContent}</li>\n`;
+            }
+          } else if (/^\d+\./.test(line.trim())) {
+            // Handle ordered list items
+            if (!inOrderedList) {
+              formattedText += "<ol>\n";
+              inOrderedList = true;
+            }
+            let listItemContent = line.trim().replace(/^\d+\.\s*/, ""); // Get list item text
+            if (listItemContent.includes(":")) {
+              let parts = listItemContent.split(/:(.*)/s); // Split into two parts: before and after the first colon
+              formattedText += `<li><strong>${parts[0]}:</strong>${parts[1]}</li>\n`;
+            } else {
+              formattedText += `<li>${listItemContent}</li>\n`;
+            }
+          } else if (line.trim().length > 0) {
+            // Close any open lists before starting a new paragraph
+            closeList();
+            formattedText += "<p>" + line.trim() + "</p>\n";
+          }
+        });
+
+        closeList();
+        document.getElementById("output").textContent = formattedText;
+      }
+    </script>
+  </body>
+</html>
